@@ -1,0 +1,32 @@
+{
+  "projects": [
+    {
+      "name": "Contributor Onboarding",
+      "owner": "Aisha Patel",
+      "status": "Active",
+      "recentActivity": "Published the first-time contributor checklist and requested feedback on setup steps.",
+      "priority": "High"
+    },
+    {
+      "name": "Search Experience Refresh",
+      "owner": "Jon Bell",
+      "status": "In review",
+      "recentActivity": "The keyboard navigation pass is ready for review after the relevance metrics update.",
+      "priority": "Medium"
+    },
+    {
+      "name": "Release Notes Automation",
+      "owner": "Mina Chen",
+      "status": "Planning",
+      "recentActivity": "Compared changelog formats and outlined a small pilot for the next release cycle.",
+      "priority": "Low"
+    },
+    {
+      "name": "Reliability Follow-up",
+      "owner": "Sam Rivera",
+      "status": "At risk",
+      "recentActivity": "Investigating an intermittent deployment timeout and coordinating a reproducible test case.",
+      "priority": "Critical"
+    }
+  ]
+}

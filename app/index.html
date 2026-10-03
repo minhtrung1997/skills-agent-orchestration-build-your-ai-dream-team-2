@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A contributor-friendly overview of Mona's active projects."
+    />
+    <title>Project Pulse</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <div>
+          <p class="eyebrow">Mona's team workspace</p>
+          <h1>Project Pulse</h1>
+          <p class="intro">
+            A quick, contributor-friendly view of what is moving, who owns it,
+            and where attention is needed next.
+          </p>
+        </div>
+        <div class="pulse-mark" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </header>
+
+      <main>
+        <section class="dashboard-summary" aria-labelledby="overview-heading">
+          <div>
+            <p class="eyebrow">Team overview</p>
+            <h2 id="overview-heading">Keep the momentum visible</h2>
+          </div>
+          <p id="project-count" class="summary-copy">Loading projects...</p>
+        </section>
+
+        <section
+          id="project-dashboard"
+          class="dashboard"
+          aria-live="polite"
+          aria-busy="true"
+          aria-labelledby="overview-heading"
+        >
+          <div class="state-panel state-loading">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <div>
+              <h2>Loading project pulse</h2>
+              <p>Gathering the latest project signals.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>Make progress easy to find, and make the next contribution clear.</p>
+      </footer>
+    </div>
+
+    <script>
+      const dashboard = document.querySelector("#project-dashboard");
+      const projectCount = document.querySelector("#project-count");
+
+      const requiredFields = [
+        "name",
+        "owner",
+        "status",
+        "recentActivity",
+        "priority",
+      ];
+
+      function createTextElement(tagName, className, text) {
+        const element = document.createElement(tagName);
+        element.className = className;
+        element.textContent = text;
+        return element;
+      }
+
+      function setState(className, heading, message) {
+        dashboard.replaceChildren();
+        dashboard.className = `dashboard ${className}`;
+        dashboard.setAttribute("aria-busy", "false");
+
+        const panel = document.createElement("div");
+        panel.className = "state-panel";
+        panel.append(
+          createTextElement("h2", "state-heading", heading),
+          createTextElement("p", "state-message", message),
+        );
+        dashboard.append(panel);
+      }
+
+      function validateProjects(payload) {
+        if (!payload || !Array.isArray(payload.projects)) {
+          throw new Error('Expected a top-level "projects" array.');
+        }
+
+        for (const [index, project] of payload.projects.entries()) {
+          if (
+            !project ||
+            requiredFields.some(
+              (field) =>
+                typeof project[field] !== "string" ||
+                project[field].trim().length === 0,
+            )
+          ) {
+            throw new Error(
+              `Project ${index + 1} is missing one or more required text fields.`,
+            );
+          }
+        }
+
+        return payload.projects;
+      }
+
+      function badgeClass(value) {
+        return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      }
+
+      function renderProject(project) {
+        const card = document.createElement("article");
+        card.className = "project-card";
+
+        const cardHeader = document.createElement("div");
+        cardHeader.className = "card-header";
+        cardHeader.append(
+          createTextElement("h3", "project-name", project.name),
+          createTextElement("p", "project-owner", `Owner: ${project.owner}`),
+        );
+
+        const badges = document.createElement("div");
+        badges.className = "badge-row";
+        const statusBadge = createTextElement(
+          "span",
+          `badge status-badge status-${badgeClass(project.status)}`,
+          `Status: ${project.status}`,
+        );
+        const priorityBadge = createTextElement(
+          "span",
+          `badge priority-badge priority-${badgeClass(project.priority)}`,
+          `Priority: ${project.priority}`,
+        );
+        badges.append(statusBadge, priorityBadge);
+
+        const activity = document.createElement("div");
+        activity.className = "activity";
+        activity.append(
+          createTextElement("p", "field-label", "Recent activity"),
+          createTextElement("p", "activity-copy", project.recentActivity),
+        );
+
+        card.append(cardHeader, badges, activity);
+        return card;
+      }
+
+      async function loadProjects() {
+        try {
+          const response = await fetch("project-data.json", {
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            throw new Error(`Project data request failed (${response.status}).`);
+          }
+
+          const projects = validateProjects(await response.json());
+          if (projects.length === 0) {
+            projectCount.textContent = "No projects are currently listed.";
+            setState(
+              "state-empty",
+              "A quiet moment",
+              "There are no projects to display yet. Add a project to start the pulse.",
+            );
+            return;
+          }
+
+          dashboard.replaceChildren(...projects.map(renderProject));
+          dashboard.className = "dashboard";
+          dashboard.setAttribute("aria-busy", "false");
+          projectCount.textContent = `${projects.length} ${
+            projects.length === 1 ? "project" : "projects"
+          } in view`;
+        } catch (error) {
+          console.error("Unable to load Project Pulse data:", error);
+          projectCount.textContent = "Project data needs attention.";
+          setState(
+            "state-error",
+            "Project pulse unavailable",
+            `We couldn't load the project list. ${error.message}`,
+          );
+        }
+      }
+
+      loadProjects();
+    </script>
+  </body>
+</html>
